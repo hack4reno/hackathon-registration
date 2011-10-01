@@ -1,0 +1,13 @@
+{
+    "name": "hackathon-registration"
+  , "version": "0.0.1"
+  , "private": true
+  , "dependencies": {
+      "express": "2.4.6"
+    , "less": ">= 0.0.1"
+    , "jade": ">= 0.0.1"
+    , "everyauth": ">= 0.2.20"
+    , "validator": ">= 0.2.7"
+    , "backbone": ">= 0.5.3"
+  }
+}
