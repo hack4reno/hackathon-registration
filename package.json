@@ -9,5 +9,7 @@
     , "everyauth": ">= 0.2.20"
     , "validator": ">= 0.2.7"
     , "backbone": ">= 0.5.3"
+    , "github": ">= 0.0.6"
+    , "oauth": ">=0.9.5"
   }
 }

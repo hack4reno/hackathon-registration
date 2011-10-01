@@ -1,4 +1,5 @@
 link(rel='stylesheet', href='stylesheets/index.css')
+script(src='javascripts/index.js')
 div(class='banner')
     div(class='banner-content') #{title}
 div(id='page')
@@ -8,15 +9,12 @@ div(id='page')
             div(class='step-section-number-content') 1
         div(class='step-section-content')
             p Setup a Github Account
-            p(class='tiny-description') A Github (TM) account is required for the hackathon.
-            form(class='button-form')
+            p(class='tiny-description') A Github &#0153; account is required for the hackathon.
+            form(class='buttons')
+                input(type='button',value='Sign in with Github',onclick='signin()')
+                input(type='button',class='longer-button', value='Sign up for an account',onclick='createGithubAccount()')
     div(class='step-section-unselected')
         div(class='step-section-number-unselected')
             div(class='step-section-number-content') 2
-        div(class='step-section-content')
-            p Registration Type
-    div(class='step-section-unselected')
-        div(class='step-section-number-unselected')
-            div(class='step-section-number-content') 3
         div(class='step-section-content')
             p Team Selection

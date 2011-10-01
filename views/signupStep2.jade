@@ -1,0 +1,22 @@
+link(rel='stylesheet', href='stylesheets/signupStep2.css')
+script(src='javascripts/signupStep2.js')
+div(class='banner')
+    div(class='banner-content') #{title}
+div(id='page')
+    div(class='section-header-small-padding') #{sectionTitle}
+    div(class='step-section-completed')
+        div(class='step-section-content')
+            div(class='step-sub-content')
+                img(src='#{gravatarURL}')
+            div(class='step-sub-content',style='height:45px')
+                div Github Account Registered
+                div(class='tiny-description') #{userName}
+    div(class='step-section-selected')
+        div(class='step-section-number-selected')
+            div(class='step-section-number-content') 2
+        div(class='step-section-content')
+            p Team Selection
+            p(class='tiny-description') This will help define you
+            form(class='buttons')
+                input(type='button',value='Create a new team',onclick='signin()')
+                input(type='button',class='longer-button', value='Sign up for an account',onclick='createGithubAccount()')
