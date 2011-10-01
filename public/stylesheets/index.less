@@ -48,11 +48,32 @@ body {
     width: 100%;
     padding-left: 1em;
     padding-top: 0.5em;
+    margin-bottom: 0.5em;
 }
 
-.step-section-number {
+.step-section-unselected {
+    color: #a7a7a7;
+    font: 1em "Lucida Grande", Helvetica, Arial, sans-serif;
+    background-color: white;
+    min-height: 5em;
+    width: 100%;
+    padding-left: 1em;
+    padding-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.step-section-number-selected {
     vertical-align: top;
     background-image: url('/images/selected-number-bg.png');
+    background-repeat: no-repeat;
+    display: inline-block;
+    min-height: 45px;
+    min-width: 45px;
+}
+
+.step-section-number-unselected {
+    vertical-align: top;
+    background-image: url('/images/unselected-number-bg.png');
     background-repeat: no-repeat;
     display: inline-block;
     min-height: 45px;
