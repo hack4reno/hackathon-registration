@@ -8,15 +8,18 @@ div(id='page')
         div(class='step-section-content')
             div(class='step-sub-content')
                 img(src='#{gravatarURL}')
-            div(class='step-sub-content',style='height:45px')
+            div(class='step-sub-content')
                 div Github Account Registered
                 div(class='tiny-description') #{userName}
-    div(class='step-section-selected')
-        div(class='step-section-number-selected')
-            div(class='step-section-number-content') 2
+    div(class='step-section-completed')
         div(class='step-section-content')
-            p Team Selection
-            p(class='tiny-description') This will help define you
-            form(class='buttons')
-                input(type='button',value='Create a new team',onclick='signin()')
-                input(type='button',class='longer-button', value='Sign up for an account',onclick='createGithubAccount()')
+            div(class='step-sub-header-left-padded')
+                div(class='step-sub-header-vertical-aligned-content')
+                    p Team Selection
+                div(class='step-sub-header-vertical-aligned-content')
+                    form(class='buttons', style='margin-left: 1em')
+                        input(type='button', value='+ Create New Team', onclick='showCreateNewTeamForm()')
+            div(class='step-sub-content')
+                div(class='team-list')
+                    != partial('team-join-panel', {collection: teams, as: 'team'})
+                    

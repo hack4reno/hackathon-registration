@@ -24,7 +24,7 @@ I know this is env non-specific at the moment .. should change later
 try {
     config = JSON.parse(fs.readFileSync(config_directory + '/' + config_filename, 'ascii'));
 } catch(e) {
-    throw new Error('Config file NOT FOUND: ' + config_directory + '/' + config_filename);
+    throw new Error('Config file is formatted incorrectly or not found: ' + config_directory + '/' + config_filename + ". " + e.toString());
 }
 
 var app = module.exports = express.createServer();
@@ -49,6 +49,15 @@ function redisError(error) {
   console.log("Redis Session store failed: " + error);
 }
 
+
+
+// Mongoose (Mongo) stuff
+
+
+
+
+
+
 // Configuration
 
 app.configure(function(){
@@ -70,6 +79,7 @@ app.configure('development', function(){
 app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
+
 
 // Routes
 
@@ -98,6 +108,7 @@ app.get('/participant-signup-validated', requireUserMiddleWare, function(req, re
         sectionTitle: 'Participant Registration',
         userName: req.session.user.login,
         gravatarURL: "https://secure.gravatar.com/avatar/" + req.session.user.gravatar_id + "?s=45",
+        teams: [{name: 'Awesome Team'}],
         loggedIn: true
     });
 });
@@ -171,6 +182,8 @@ function requireUserMiddleWare(req, res, next) {
     }
 }
 
+
+app.mongo = require('./models')(config.mongourl);
 
 
 
