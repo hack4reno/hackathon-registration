@@ -106,7 +106,7 @@ app.get('/participant-signup', function(req, res){
 });
 
 app.get('/participant-join-submitted', function(req, res){
-  res.render('index', {
+  res.render('signupRequestJoinTeam', {
     title: 'Hack4Reno',
     sectionTitle: ''
   });
@@ -251,6 +251,25 @@ app.get('/github_signin', function(req, res) {
 });
 
 app.get('/main', requireUserMiddleWare, function(req, res) {
+  var specialMsg = req.param('specialMsg');
+
+  var specialText = "";
+  var hasSpecialText = false;
+    
+  //Special messages
+  if(specialMsg == "join-team") {
+    hasSpecialText = true;
+    specialText = "The owner of the team has been notified that you wish to join. Please come back once you have been approved.";
+  } else if(specialMsg == "create-team") {
+      hasSpecialText = true;
+      specialText = "Congratulations! Your team has been created.";
+  }
+
+    console.log("specialMsg: " + specialMsg);
+    console.log("specialText: " + specialText);
+    console.log("hasSpecialText: " + hasSpecialText);
+
+
   var Team = app.mongo.model('Team');
     Team.find({}).populate('participants').run(function(err, docs) {
         if(err) {
@@ -263,6 +282,8 @@ app.get('/main', requireUserMiddleWare, function(req, res) {
                 userName: req.session.user.login,
                 gravatarURL: getGravatarURL(req),
                 teams: docs,
+                specialText: specialText,
+                hasSpecialText: hasSpecialText,
                 loggedIn: true
             });
         }
@@ -286,13 +307,15 @@ app.post('/join-team', requireUserMiddleWare, function(req, res, next){
                     if(err) {
                         next(err);
                     } else {
-                        res.redirect("/participant-join-submitted");
+                        res.redirect("/main?specialMsg=join-team");
                     }
                 });
             }
         }
     });
 });
+
+
 
 app.post('/create-and-join-team', requireUserMiddleWare, function(req, res, next){
     
@@ -339,7 +362,7 @@ app.post('/create-and-join-team', requireUserMiddleWare, function(req, res, next
             req.session.teamId = newTeam._id;
             saveInfoToSession(req, {userId: req.session.userId, teamId: newTeam._id, teamName: newTeam.name, hasTeam: true});
             //saveInfoToSession(req, {userId: newParticipant._id, teamId: newTeam._id, teamName: newTeam.name, hasTeam: true});
-            res.redirect("/main");
+            res.redirect("/main?specialMsg=create-team");
         }
     });
 });
