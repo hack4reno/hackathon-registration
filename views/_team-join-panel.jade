@@ -1,5 +1,23 @@
 div(class='team-join-panel-block')
-    div(class='team-join-panel-icon')
-    div(class='team-join-panel-info')
+    div(class='team-join-panel-name')
         #{team.name}
-    div(class='team-join-panel-button-stack')
+    div(class='team-join-panel-description')
+        if team.publishProjectDescription == true
+            p #{team.publicDescription}
+        else
+            p(class='nonPublicDescription') Description Not Public
+    div(class='team-join-panel-members')
+        each participant in team.participants
+            img(src='https://secure.gravatar.com/avatar/#{participant.gravatarId}?s=30')
+    div(class='team-panel-needs-bar')
+        if (team.needsDevelopers)
+            span(class='team-join-panel-needs-block') Needs Developers
+        if (team.needsDesigners)
+            span(class='team-join-panel-needs-block') Needs Designers
+         if (team.needsIdeas)
+            span(class='team-join-panel-needs-block') Needs Ideas
+    if ((team.needsDevelopers || team.needsDesigners || team.needsIdeas) && (team.participants.length < team.maxTeamSize) )
+        div(class='buttons')
+            form(class='buttons',id='form-#{team._id}',action='/join-team',method='POST')
+                input(type='hidden',name='team_id',value='#{team._id}')
+                input(type='button',value='Join Team',onclick='joinTeam(\'#{team._id}\')')

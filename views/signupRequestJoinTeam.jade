@@ -1,0 +1,12 @@
+script(src='javascripts/signupRequestJoinTeam.js')
+div(class='banner')
+    div(class='banner-content') #{title}
+div(id='page')
+    div(class='step-section-selected')
+        div(class='step-section-content')
+            p Join Request Submitted
+            p(class='tiny-description')
+                = The owner of the team has been notified that you wish to join. Please come back once you have been approved.
+            div(class='buttons-padded')
+                form(class='buttons')
+                    input(type='button',value='Continue on to main site',onclick='continueToMain()')
