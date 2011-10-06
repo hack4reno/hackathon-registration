@@ -13,5 +13,7 @@
     , "oauth": ">=0.9.5"
     , "mongoose": ">=2.2.3"
     , "mongoose-types": ">=1.0.3"
+    , "forever": ">=0.6.9"
+    , "connect-redis": ">=1.1.0"
   }
 }

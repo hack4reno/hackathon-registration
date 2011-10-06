@@ -16,6 +16,7 @@ var express = require('express'),
 //Some global vars
 var redisConnected = true;
 
+var portNumber = 8080;
 
 var config_directory = "/config";
 var config_filename = "hackathon-config.json";
@@ -80,7 +81,8 @@ app.configure('development', function(){
 });
 
 app.configure('production', function(){
-  app.use(express.errorHandler()); 
+  app.use(express.errorHandler());
+  portNumber = 80;
 });
 
 
@@ -419,5 +421,5 @@ app.mongo = require('./models')(config.mongourl);
 
 
 
-app.listen(8080);
+app.listen(portNumber);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
