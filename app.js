@@ -89,7 +89,14 @@ app.configure('production', function(){
 // Routes
 
 app.get('/', function(req, res){
-  res.redirect("/participant-signup");
+  res.redirect("/maintenance");
+});
+
+app.get('/maintenance', function(req, res) {
+    res.render('maintenance', {
+        title: 'Hack4Reno',
+        sectionTitle: 'Maintenance'
+      });
 });
 
 app.get('/logout', function(req, res) {
