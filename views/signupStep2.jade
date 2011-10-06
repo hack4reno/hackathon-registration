@@ -1,59 +1,56 @@
 link(rel='stylesheet', href='stylesheets/signupStep2.css')
 script(src='javascripts/signupStep2.js')
-div(class='banner')
-    div(class='banner-content') #{title}
-div(id='page')
-    div(class='section-header-small-padding') #{sectionTitle}
-    div(class='step-section-completed')
-        div(class='step-section-content')
-            div(class='step-sub-content')
-                img(src='#{gravatarURL}')
-            div(class='step-sub-content')
-                div Github Account Registered
-                div(class='tiny-description') #{userName}
-    div(class='step-section-completed')
-        div(class='step-section-content')
-            p Team Selection - Options
-                div(class='toggle-button-row')
-                    input(type='button', id='button-teamselection-createateam', class='tiny-toggle-button', value='Create a Team', onclick='toggleCreateATeam()')
-                    input(type='button', id='button-teamselection-joinateam', class='tiny-toggle-button', value='Join a Team', onclick='toggleJoinATeam()')
-    div(class='step-section-completed',id='team-create-section',style='display:none')
-        div(class='step-section-content-underneath')
-            div(id='section-create-new-form')
-                    form(id='newteam-form', style='margin-left: 1em',action='create-and-join-team',method='POST')
-                        fieldset
-                            input(type='hidden',name='publish_project_description_field',id='publish_project_description_field')
-                            input(type='hidden',name='need_developers_field',id='need_developers_field')
-                            input(type='hidden',name='need_designers_field',id='need_designers_field')
-                            input(type='hidden',name='need_ideas_field',id='need_ideas_field')
-                            div(class='textInput')
-                                div(class='textbox-wrapper')
-                                    label(for='team_name') Team Name:
-                                    input(type='text',id='team_name',name='team_name')
-                                div(class='textbox-wrapper')
-                                    label(for='project_description') Project Description:
-                                    input(type='text',id='project_description',name='project_description')
-                            div(class='toggle-button-row')
-                                    label Publish Project Description?
-                                    div
-                                        input(type='button', id='button-publish-description-yes', class='tiny-toggle-button', value='Yes', onclick='togglePublishDescriptionYes()')
-                                        input(type='button', id='button-publish-description-no', class='tiny-toggle-button', value='No', onclick='togglePublishDescriptionNo()')
-                            p Who do you need? (select multiple)
-                            div(class='toggle-button-row')
-                                input(type='button', id='button-need-developers', class='tiny-toggle-button', value='Need developer(s)', onclick='toggleNeedDevelopers()')
-                                input(type='button', id='button-need-designers', class='tiny-toggle-button', value='Need designer(s)', onclick='toggleNeedDesigners()')
-                                input(type='button', id='button-need-ideas', class='tiny-toggle-button', value='Need idea(s)', onclick='toggleNeedIdeas()')
-                            div(class='main-button-row')
-                                div(class='buttons')
-                                    form(class='buttons')
-                                        input(type='button',value='Create Team',onclick='createTeamSubmit()')
-                                        input(type='button',class='longer-button', value='Cancel',onclick='toggleJoinATeam()')
-    div(class='step-section-completed',id='team-join-section', style='display:none')
-        div(class='step-section-content-underneath')
-            div(class='step-sub-content',id='subcontent-team-list')
-                div(class='team-list')
-                    if teams.length > 0
-                        != partial('team-join-panel', {collection: teams, as: 'team'})
-                    else
-                        p No teams have been created yet.
-                    
+div(class='section-header-small-padding') #{sectionTitle}
+div(class='step-section-completed')
+    div(class='step-section-content')
+        div(class='step-sub-content')
+            img(src='#{gravatarURL}')
+        div(class='step-sub-content')
+            div Github Account Registered
+            div(class='tiny-description') #{userName}
+div(class='step-section-completed')
+    div(class='step-section-content')
+        p Team Selection - Options
+            div(class='toggle-button-row')
+                input(type='button', id='button-teamselection-createateam', class='tiny-toggle-button', value='Create a Team', onclick='toggleCreateATeam()')
+                input(type='button', id='button-teamselection-joinateam', class='tiny-toggle-button', value='Join a Team', onclick='toggleJoinATeam()')
+div(class='step-section-completed',id='team-create-section',style='display:none')
+    div(class='step-section-content-underneath')
+        div(id='section-create-new-form')
+                form(id='newteam-form', style='margin-left: 1em',action='create-and-join-team',method='POST')
+                    fieldset
+                        input(type='hidden',name='publish_project_description_field',id='publish_project_description_field')
+                        input(type='hidden',name='need_developers_field',id='need_developers_field')
+                        input(type='hidden',name='need_designers_field',id='need_designers_field')
+                        input(type='hidden',name='need_ideas_field',id='need_ideas_field')
+                        div(class='textInput')
+                            div(class='textbox-wrapper')
+                                label(for='team_name') Team Name:
+                                input(type='text',id='team_name',name='team_name')
+                            div(class='textbox-wrapper')
+                                label(for='project_description') Project Description:
+                                input(type='text',id='project_description',name='project_description')
+                        div(class='toggle-button-row')
+                                label Publish Project Description?
+                                div
+                                    input(type='button', id='button-publish-description-yes', class='tiny-toggle-button', value='Yes', onclick='togglePublishDescriptionYes()')
+                                    input(type='button', id='button-publish-description-no', class='tiny-toggle-button', value='No', onclick='togglePublishDescriptionNo()')
+                        p Who do you need? (select multiple)
+                        div(class='toggle-button-row')
+                            input(type='button', id='button-need-developers', class='tiny-toggle-button', value='Need developer(s)', onclick='toggleNeedDevelopers()')
+                            input(type='button', id='button-need-designers', class='tiny-toggle-button', value='Need designer(s)', onclick='toggleNeedDesigners()')
+                            input(type='button', id='button-need-ideas', class='tiny-toggle-button', value='Need idea(s)', onclick='toggleNeedIdeas()')
+                        div(class='main-button-row')
+                            div(class='buttons')
+                                form(class='buttons')
+                                    input(type='button',value='Create Team',onclick='createTeamSubmit()')
+                                    input(type='button',class='longer-button', value='Cancel',onclick='toggleJoinATeam()')
+div(class='step-section-completed',id='team-join-section', style='display:none')
+    div(class='step-section-content-underneath')
+        div(class='step-sub-content',id='subcontent-team-list')
+            div(class='team-list')
+                if teams.length > 0
+                    != partial('team-join-panel', {collection: teams, as: 'team'})
+                else
+                    p No teams have been created yet.
+

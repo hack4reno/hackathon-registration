@@ -1,17 +1,14 @@
 link(rel='stylesheet', href='stylesheets/main.css')
 script(src='javascripts/main.js')
-div(class='banner')
-    div(class='banner-content') #{title}
-div(id='page')
-    div(class='section-header') #{sectionTitle}
-    div(class='step-section-completed',id='team-join-section')
-        div(class='step-section-content-underneath')
-            div(class='step-sub-content',id='subcontent-team-list')
-                if hasSpecialText
-                    div(class='special-msg-block') #{specialText}
-                div(class='team-list')
-                    p Teams List:
-                    if teams.length > 0
-                        != partial('team-info-panel', {collection: teams, as: 'team'})
-                    else
-                        p No teams have been created yet.
+div(class='section-header') #{sectionTitle}
+div(class='step-section-completed',id='team-join-section')
+    div(class='step-section-content-underneath')
+        div(class='step-sub-content',id='subcontent-team-list')
+            if hasSpecialText
+                div(class='special-msg-block') #{specialText}
+            div(class='team-list')
+                p Teams List:
+                if teams.length > 0
+                    != partial('team-info-panel', {collection: teams, as: 'team'})
+                else
+                    p No teams have been created yet.

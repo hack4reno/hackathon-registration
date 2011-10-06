@@ -99,7 +99,7 @@ app.get('/logout', function(req, res) {
 });
 
 app.get('/participant-signup', function(req, res){
-  res.render('index', {
+  res.render('signup', {
     title: 'Hack4Reno',
     sectionTitle: 'Participant Registration'
   });
@@ -150,10 +150,10 @@ app.get('/participant-signup-validated', requireUserMiddleWare, function(req, re
                                             console.log("Err=" + err);
                                         } else {
                                             if(docs !== undefined && docs != null && docs.length > 0) {
-                                                saveInfoToSession(req, {userId: currentParticipantId, teamId: null, teamName: "", hasTeam: false});
+                                                saveInfoToSession(req, {userId: currentParticipantId, pendingTeams: docs, pendingTeam: true});
                                                 res.redirect("/main");
                                             } else {
-                                                saveInfoToSession(req, {userId: currentParticipantId, teamId: null, teamName: "", hasTeam: false});
+                                                saveInfoToSession(req, {userId: currentParticipantId, teamId: null, teamName: "", hasTeam: false, pendingTeam: false});
                                                 res.redirect('/participant-signup-validated-join-team');
                                             }
                                         }
@@ -171,7 +171,7 @@ app.get('/participant-signup-validated', requireUserMiddleWare, function(req, re
                         console.log("Err=" + err);
                         next(err);
                     } else {
-                        saveInfoToSession(req, {userId: newParticipant._id, teamId: null, teamName: "", hasTeam: false});
+                        saveInfoToSession(req, {userId: newParticipant._id});
                         res.redirect('/participant-signup-validated-join-team');
                     }
                 });
@@ -360,8 +360,7 @@ app.post('/create-and-join-team', requireUserMiddleWare, function(req, res, next
             next(err);
         } else {
             req.session.teamId = newTeam._id;
-            saveInfoToSession(req, {userId: req.session.userId, teamId: newTeam._id, teamName: newTeam.name, hasTeam: true});
-            //saveInfoToSession(req, {userId: newParticipant._id, teamId: newTeam._id, teamName: newTeam.name, hasTeam: true});
+            saveInfoToSession(req, {teamId: newTeam._id, teamName: newTeam.name, hasTeam: true});
             res.redirect("/main?specialMsg=create-team");
         }
     });
@@ -374,11 +373,26 @@ function isLoggedIn(req) {
 }
 
 function saveInfoToSession(req, sessionInfoObject) {
-    req.session.userId = sessionInfoObject.userId;
-    req.session.teamId = sessionInfoObject.teamId;
-    req.session.teamName = sessionInfoObject.teamName;
-    req.session.hasTeam = sessionInfoObject.hasTeam;
-    req.session.pendingTeam = sessionInfoObject.pendingTeam;
+
+    var sessionObjectTemplate = {
+        pendingTeams: [],
+        userId: null,
+        teamId: null,
+        teamName: null,
+        hasTeam: false,
+        pendingTeam: false
+    };
+    
+    for(var prop in sessionObjectTemplate) {
+        if(sessionInfoObject[prop] !== undefined){
+            req.session[prop] = sessionInfoObject[prop];
+        } else {
+            //If we have nothing set on the session and it's not defined in the passed in object, set a default value
+            if(req.session[prop] === undefined) {
+                req.session[prop] = sessionObjectTemplate[prop];
+            }
+        }
+     }
 }
 
 function getGravatarURL(req) {
