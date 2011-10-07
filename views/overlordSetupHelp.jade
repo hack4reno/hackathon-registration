@@ -1,0 +1,13 @@
+div(class='section-header') #{sectionTitle}
+script(type='text/javascript')
+    function submitForm() {
+        $("#oauth-form").submit();
+    }
+div(class='step-section-selected')
+    div(class='step-section-content')
+        p Overlord Account Needed
+        p(class='tiny-description') Your application currently has the setting 'overlordSetup' to false. Click the button below and login as the overlord account. The overlord will be the account that is used to administer the team management and organization on behalf of the application.
+            p(style='padding: 0.5em')
+                form(method='POST', action='overlord-oauth', id='oauth-form', class='buttons')
+                    input(type='button',value='Login as overlord account',onclick='submitForm()')
+            p(style='padding: 0.5em')

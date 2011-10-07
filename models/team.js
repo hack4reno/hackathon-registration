@@ -9,6 +9,7 @@ var TeamSchema = module.exports = new Schema({
     needsDevelopers: {type: Boolean},
     needsDesigners: {type: Boolean},
     needsIdeas: {type: Boolean},
+    githubTeamId: {type: String},
     participants: [{ type: Schema.ObjectId, ref: 'Participant' }],
     pendingParticipants: [{ type: Schema.ObjectId, ref: 'Participant' }],
     insertDate  :  { type: Date, "default": Date.now }

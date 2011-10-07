@@ -16,11 +16,11 @@ var express = require('express'),
 //Some global vars
 var redisConnected = true;
 
+//Default port number
 var portNumber = 8080;
 
 var config_directory = "/config";
 var config_filename = "hackathon-config.json";
-var current_root_host = "http://localhost:8080/";
 
 /*
 I know this is env non-specific at the moment .. should change later
@@ -32,7 +32,7 @@ try {
 }
 
 var app = module.exports = express.createServer();
-
+var current_root_host = config.rootHost;
 
 // Redis store setup for sessions
 
@@ -56,10 +56,6 @@ function redisError(error) {
 
 
 // Mongoose (Mongo) stuff
-
-
-
-
 
 
 // Configuration
@@ -88,8 +84,11 @@ app.configure('production', function(){
 
 // Routes
 
-app.get('/', function(req, res){
-  res.redirect("/maintenance");
+app.get('/', maintenanceMiddleware, function(req, res){
+    res.render('index', {
+        title: 'Hack4Reno',
+        sectionTitle: 'Hack4Reno Hackathoner Hub'
+      });  
 });
 
 app.get('/maintenance', function(req, res) {
@@ -189,6 +188,54 @@ app.get('/participant-signup-validated', requireUserMiddleWare, function(req, re
     });
 });
 
+
+//OVERLORD FUNCTIONS START
+
+
+app.get('/overlord-setup', function(req, res, next) {
+    if(!config.overlordSetup) {
+        res.render('overlordSetupHelp', {
+            title: 'Hack4Reno',
+            sectionTitle: 'Overlord Setup'
+        });
+    } else {
+        res.redirect('/');
+    }
+});
+
+app.get('/overlord-setup-validated', function(req, res, next) {
+    if(!config.overlordSetup) {
+        res.render('overlordSetupDone', {
+            title: 'Hack4Reno',
+            sectionTitle: 'Overlord Setup',
+            code: req.session.oAuthAccessCode,
+            token: req.session.githubAccessToken
+        });
+    } else {
+        res.redirect('/');
+    }
+});
+
+app.post('/overlord-oauth', function(req, res, next) {
+    if(!config.overlordSetup) {
+        // OAuth setup
+        var oauth = new OAuth2(config.githubClientId, config.githubSecretId, 'https://github.com/', 'login/oauth/authorize', 'login/oauth/access_token');
+
+        var authorizeURL = oauth.getAuthorizeUrl({
+          redirect_uri: current_root_host + 'github-callback',
+          scope: "repo"
+        });
+
+        res.redirect(authorizeURL);
+    } else {
+        res.redirect('/');
+    }
+});
+
+// OVERLORD FUNCTIONS END
+
+
+
 app.get('/participant-signup-validated-join-team', requireUserMiddleWare, function(req, res, next) {
     var Team = app.mongo.model('Team');
     Team.find({}).populate('participants').run(function(err, docs) {
@@ -207,6 +254,20 @@ app.get('/participant-signup-validated-join-team', requireUserMiddleWare, functi
     });
 });
 
+function execOAuthForCommand(callback) {
+    var oauth = new OAuth2(config.githubClientId, config.githubSecretId, 'https://github.com/', 'login/oauth/authorize', 'login/oauth/access_token');
+
+    oauth.getOAuthAccessToken(config.overlordOAuthCode, {}, function (err, access_token, refresh_token) {
+        if(err) {
+            console.log("OAuthError:: " + err);
+            callback(err, null);
+        } else {
+            console.log("OAuthSuccess:: " + access_token + ", refresh_token:" + refresh_token);
+            callback(null, access_token);
+        }
+    });
+}
+
 app.get('/github-callback', function(req, res, next) {
     console.log("GET called");
     var url = Url.parse(req.url);
@@ -215,6 +276,7 @@ app.get('/github-callback', function(req, res, next) {
     // OAuth setup
     var oauth = new OAuth2(config.githubClientId, config.githubSecretId, 'https://github.com/', 'login/oauth/authorize', 'login/oauth/access_token');
 
+    var accessCode = query.code;
     oauth.getOAuthAccessToken(query.code, {}, function (err, access_token, refresh_token) {
             if (err) {
                 console.log("Err=" + JSON.stringify(err));
@@ -238,10 +300,19 @@ app.get('/github-callback', function(req, res, next) {
 
                     //Ok, we got an access code, it's valid, and we got a user back.
                     req.session.githubAccessToken = accessToken;
+                    req.session.oAuthAccessCode = accessCode;
                     req.session.loggedIn = true;
                     req.session.user = user;
 
-                    res.redirect("/participant-signup-validated");
+                    saveInfoToSession(req, {login: req.session.user.login});
+
+                    if(!config.overlordSetup) {
+                        res.redirect("/overlord-setup-validated");
+                    } else {
+                        res.redirect("/participant-signup-validated");
+                    }
+
+
                 }
             });
         });
@@ -252,8 +323,8 @@ app.get('/github_signin', function(req, res) {
     var oauth = new OAuth2(config.githubClientId, config.githubSecretId, 'https://github.com/', 'login/oauth/authorize', 'login/oauth/access_token');
 
     var authorizeURL = oauth.getAuthorizeUrl({
-      redirect_uri: 'http://localhost:8080/github-callback',
-      scope: "user,repo,gist,public_repo"
+      redirect_uri: current_root_host + 'github-callback',
+      scope: "repo"
     });
 
     res.redirect(authorizeURL);
@@ -325,7 +396,6 @@ app.post('/join-team', requireUserMiddleWare, function(req, res, next){
 });
 
 
-
 app.post('/create-and-join-team', requireUserMiddleWare, function(req, res, next){
     
     var team_name = req.body.team_name;
@@ -370,7 +440,37 @@ app.post('/create-and-join-team', requireUserMiddleWare, function(req, res, next
         } else {
             req.session.teamId = newTeam._id;
             saveInfoToSession(req, {teamId: newTeam._id, teamName: newTeam.name, hasTeam: true});
-            res.redirect("/main?specialMsg=create-team");
+
+                //Github magic start
+                var overlordGithubAPI = new GitHubApi(true);
+                overlordGithubAPI.authenticatePassword(config.overlordUsername, config.overlordPassword);
+
+                var organizationAPI = overlordGithubAPI.getOrganizationApi();
+
+                organizationAPI.addTeam(config.organizationName, team_name, function(err, team) {
+                    if(err) {
+                        console.log("Err addTeam=" + JSON.stringify(err));
+                        next(err);
+                    } else {
+                        newTeam.githubTeamId = team.id;
+                        newTeam.save(function(err) {
+                            if(err) {
+                                console.log("Err=" + JSON.stringify(err));
+                                next(err);
+                            } else {
+                                //Add user to team
+                                organizationAPI.addTeamMember(newTeam.githubTeamId, req.session.login, function(err, members) {
+                                    if(err) {
+                                        console.log("Err addTeamMember=" + JSON.stringify(err));
+                                        next(err);
+                                    } else {
+                                        res.redirect("/main?specialMsg=create-team");
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
         }
     });
 });
@@ -389,7 +489,8 @@ function saveInfoToSession(req, sessionInfoObject) {
         teamId: null,
         teamName: null,
         hasTeam: false,
-        pendingTeam: false
+        pendingTeam: false,
+        login: null
     };
     
     for(var prop in sessionObjectTemplate) {
@@ -402,6 +503,8 @@ function saveInfoToSession(req, sessionInfoObject) {
             }
         }
      }
+
+     console.log("Session= " + JSON.stringify(req.session));
 }
 
 function getGravatarURL(req) {
@@ -420,6 +523,15 @@ function requireUserMiddleWare(req, res, next) {
         }
     } catch(e) {
         next(e);
+    }
+}
+
+//Maintenance middleware
+function maintenanceMiddleware(req, res, next) {
+    if(config.maintenaceMode === true) {
+        res.redirect("/maintenance");
+    } else {
+        next();
     }
 }
 
