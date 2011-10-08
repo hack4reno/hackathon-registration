@@ -1,0 +1,29 @@
+fieldset
+    input(type='hidden',name='publish_project_description_field',id='publish_project_description_field')
+    input(type='hidden',name='need_developers_field',id='need_developers_field')
+    input(type='hidden',name='need_designers_field',id='need_designers_field')
+    input(type='hidden',name='need_ideas_field',id='need_ideas_field')
+    div(class='textInput')
+        div(class='textbox-wrapper')
+            label(for='team_name') Team Name:
+            input(type='text',id='team_name',name='team_name', value='#{team.name}')
+        div(class='textbox-wrapper')
+            label(for='project_description') Project Description:
+            input(type='text',id='project_description',name='project_description', value='#{team.description}')
+    div(class='toggle-button-row')
+            label Publish Project Description?
+            div
+                input(type='button', id='button-publish-description-yes', class='tiny-toggle-button', value='Yes', onclick='togglePublishDescriptionYes()')
+                input(type='button', id='button-publish-description-no', class='tiny-toggle-button', value='No', onclick='togglePublishDescriptionNo()')
+    p Who do you need? (select multiple)
+    div(class='toggle-button-row')
+        input(type='button', id='button-need-developers', class='tiny-toggle-button', value='Need developer(s)', onclick='toggleNeedDevelopers()')
+        input(type='button', id='button-need-designers', class='tiny-toggle-button', value='Need designer(s)', onclick='toggleNeedDesigners()')
+        input(type='button', id='button-need-ideas', class='tiny-toggle-button', value='Need idea(s)', onclick='toggleNeedIdeas()')
+script(type='text/javascript')
+    var isPublishDescription = #{team.publishProjectDescription};
+    if(isPublishDescription) {
+        documentCompleteExecutes.push(togglePublishDescriptionYes);
+    } else {
+        documentCompleteExecutes.push(togglePublishDescriptionNo);
+    }

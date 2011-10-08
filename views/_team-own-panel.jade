@@ -1,0 +1,6 @@
+form(id='edit-team-form', style='margin-left: 1em',action='edit-own-team',method='POST')
+    != partial('team-edit-panel')
+    div(class='main-button-row')
+        div(class='buttons')
+            form(class='buttons')
+                input(type='button',value='Save',onclick='saveTeamSubmit(\'#{team.id}\')')

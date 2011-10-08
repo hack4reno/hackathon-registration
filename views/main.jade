@@ -6,9 +6,21 @@ div(class='step-section-completed',id='team-join-section')
         div(class='step-sub-content',id='subcontent-team-list')
             if hasSpecialText
                 div(class='special-msg-block') #{specialText}
-            div(class='team-list')
-                p Teams List:
-                if teams.length > 0
-                    != partial('team-info-panel', {collection: teams, as: 'team'})
+            div(class='toggle-button-row')
+                input(type='button', id='button-my-team', class='tiny-toggle-button', value='My Team(s)', onclick='toggleMyTeam()')
+                input(type='button', id='button-formed-teams', class='tiny-toggle-button', value='Formed Teams', onclick='toggleFormedTeams()')
+                input(type='button', id='button-needs-teams', class='tiny-toggle-button', value='Teams Needing Members', onclick='toggleTeamNeeds()')
+            div(id='info-my-team', style='display:none')
+                != partial('team-own-panel', {collection: myTeams, as: 'team'})
+            div(id='list-formed-teams', class='team-list', style='display:none')
+                p Formed Teams List:
+                if formedTeams.length > 0
+                    != partial('team-info-panel', {collection: formedTeams, as: 'team'})
                 else
-                    p No teams have been created yet.
+                    p No teams have been fully formed, yet.
+            div(id='list-needs-teams', class='team-list', style='display:none')
+                p Teams Looking for Members List:
+                if needsTeams.length > 0
+                    != partial('team-info-panel', {collection: needsTeams, as: 'team'})
+                else
+                    p No teams are currently seeking more participants
