@@ -88,6 +88,7 @@ app.configure('production', function(){
 
 app.get('/', maintenanceMiddleware, function(req, res){
     res.render('index', {
+        devMode: this.config.devMode,
         title: 'Hack4Reno',
         sectionTitle: 'Hack4Reno Hackathoner Hub'
       });  
