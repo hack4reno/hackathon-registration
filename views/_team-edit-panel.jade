@@ -6,10 +6,18 @@ fieldset
     div(class='textInput')
         div(class='textbox-wrapper')
             label(for='team_name', class='form-description') Team Name:
-            input(type='text',id='#{formPrefix}team_name',name='team_name', value='#{team.name}')
+            if(isNew == true)
+                input(type='text',id='#{formPrefix}team_name',name='team_name', value='#{team.name}')
+            else
+                span(class='tiny-description') #{team.name}
+                input(type='hidden',id='#{formPrefix}team_name',name='team_name', value='#{team.name}')
         div(class='textbox-wrapper')
             label(for='project_description', class='form-description') Project Description:
-            input(type='text',id='#{formPrefix}project_description',name='project_description', value='#{team.description}')
+            if(isNew == true)
+                input(type='text',id='#{formPrefix}project_description',name='project_description', value='#{team.description}')
+            else
+                span(class='tiny-description') #{team.description}
+                input(type='hidden',id='#{formPrefix}project_description',name='project_description', value='#{team.description}')
     div(class='toggle-button-row')
             label Publish Project Description?
             div

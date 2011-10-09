@@ -10,6 +10,8 @@ function DataStoreHandler(app, sessionObject) {
     this.$userId = sessionObject.userId;
     this.$githubUser = sessionObject.user;
     this.$githubAccessToken = sessionObject.githubAccessToken;
+
+    console.log("$githubAccessToken = " + sessionObject.githubAccessToken);
 };
 
 DataStoreHandler.prototype.listMyTeams = function(callback) {
@@ -27,8 +29,56 @@ DataStoreHandler.prototype.getNewGithubAPI = function() {
     return overlordGithubAPI;
 };
 
+DataStoreHandler.prototype.getNewPersonalGithubAPI = function() {
+    var personalGithubAPI = new GitHubApi(true);
+    personalGithubAPI.authenticateToken(this.$githubUser.login, this.$githubAccessToken);
+    return personalGithubAPI;
+};
 
-DataStoreHandler.prototype.updateTeam = function() {
+
+DataStoreHandler.prototype.updateTeam = function(team, callback) {
+    var thisObj = this;
+    var githubAPI = thisObj.getNewGithubAPI();
+    var organizationAPI = githubAPI.getOrganizationApi();
+
+    organizationAPI.updateTeamName = function(teamId, teamName, callback)
+    {
+        var parameters = {};
+        
+        parameters["team"] = {"name": thisObj.$config.organizationName + "/" + teamName,
+                    "id": teamId,
+                    "permission": "admin"};
+
+
+        organizationAPI.$api.put(
+            'teams/' + teamId,
+            parameters, {format: "json"},
+            organizationAPI.$createListener(callback)
+        );
+    };
+
+    organizationAPI.updateTeamName(team.githubTeamId, team.name, function(err, retTeam) {
+        console.log("retTeam=" + JSON.stringify(retTeam));
+        team.githubTeamName = retTeam.name;
+        thisObj.updateRepository(team, function(err, retRepository) {
+            console.log("Post update repository");
+            if(err) {
+                console.log("Post update repository. THERE WAS AN ERROR!!");
+                callback(err);
+            } else {
+                console.log("Post update repository. EVERYTHING OK!!");
+                team.save(function(err) {
+                    if(err) {
+                        console.log("ON TEAM SAVE ERRROR!!!");
+                        callback(err);
+                    } else {
+                        console.log("ON TEAM SAVE. EVERYTHING OK!!");
+                        callback(null, err);
+                    }
+                });
+            }
+        });
+    });
 
 };
 
@@ -61,16 +111,18 @@ DataStoreHandler.prototype.joinTeam = function(team, callback) {
     var thisObj = this;
     var githubAPI = thisObj.getNewGithubAPI();
     var organizationAPI = githubAPI.getOrganizationApi();
-    var issueAPI = githubAPI.getIssueApi();
 
     var issueTitle = thisObj.$githubUser.login + " just joined your team!";
     var issueBody = "This is an automated friendly message to let you know that " + thisObj.$githubUser.login + " just joined your team. Use this issue to track discussions regarding this action. Close this issue if there are no discussions required.";
+
+    var personalGithubAPI = thisObj.getNewGithubAPI();
+    var issueAPI = personalGithubAPI.getIssueApi();
 
     issueAPI.createIssue = function(title, body, repositoryName, callback)
     {
         var parameters = {};
         parameters["login"] = thisObj.$githubUser.login;
-        parameters["token"] = this.$githubAccessToken;
+        parameters["token"] = thisObj.$githubAccessToken;
         parameters["title"] = title;
         parameters["body"] = body;
 
@@ -181,6 +233,44 @@ DataStoreHandler.prototype.createTeamRepo = function(team, callback) {
     };
 
     repositoryAPI.createRepository(team, function(err, repository) {
+        if(err) {
+            callback(err);
+        } else {
+            //Ret object contains "repository"
+            if(repository && repository.repository) {
+                repository = repository.repository;
+            }
+            callback(null, repository);
+        }
+    });
+};
+
+DataStoreHandler.prototype.updateRepository = function(team, callback) {
+    var thisObj = this;
+    var githubAPI = this.getNewGithubAPI();
+
+    var repositoryAPI = githubAPI.getRepoApi();
+
+    repositoryAPI.updateRepository = function(team, callback)
+    {
+        var parameters = {};
+
+        if(team.publishProjectDescription) {
+            parameters["description"] = team.description;
+        } else {
+            parameters["description"] = '';
+        }
+
+
+        repositoryAPI.$api.post(
+            '/repos/show/' + thisObj.$config.organizationName + "/" + team.githubRepositoryName,
+            parameters, null,
+            repositoryAPI.$createListener(callback)
+        );
+    };
+
+    repositoryAPI.updateRepository(team, function(err, repository) {
+        console.log("repository=" + JSON.stringify(repository));
         if(err) {
             callback(err);
         } else {

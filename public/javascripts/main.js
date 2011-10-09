@@ -4,7 +4,7 @@ documentCompleteExecutes.push(onDocumentReady);
 
 function onDocumentReady() {
     toggleMyTeam();
-    setTimeout("fadeOutSpecialText()", 5000);
+    setTimeout("fadeOutSpecialText()", 8000);
 }
 
 function fadeOutSpecialText() {

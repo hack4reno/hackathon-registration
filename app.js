@@ -325,6 +325,10 @@ app.get('/github-callback', function(req, res, next) {
             }
 
             var accessToken = access_token;
+            var refreshToken = refresh_token;
+
+            console.log("access_token=" + accessToken);
+            console.log("refresh_token=" + refreshToken);
 
             //Let's try using our new found access_token
             var github = new GitHubApi(true);
@@ -364,13 +368,14 @@ app.get('/github_signin', function(req, res) {
 
     var authorizeURL = oauth.getAuthorizeUrl({
       redirect_uri: current_root_host + 'github-callback',
-      scope: "repo"
+      scope: "user,repo,public_repo,gist"
     });
 
     res.redirect(authorizeURL);
 });
 
-app.get('/main', [requireUserMiddleWare, lookupMyTeams, lookupMyPendingTeams, lookupFormedTeams, lookupNeedsTeams], function(req, res) {
+app.get('/main', [requireUserMiddleWare, lookupMyTeams, lookupFormedTeams, lookupNeedsTeams], function(req, res) {
+    console.log("!!!: main");
     var Team = app.mongo.model('Team');
     var specialMsg = req.param('specialMsg');
 
@@ -382,8 +387,11 @@ app.get('/main', [requireUserMiddleWare, lookupMyTeams, lookupMyPendingTeams, lo
         hasSpecialText = true;
         specialText = "Congratulations! You've just joined a team. A repository issue was opened to notify the other team members of your presence and track discussions around it.";
     } else if(specialMsg == "create-team") {
-         hasSpecialText = true;
+        hasSpecialText = true;
         specialText = "Congratulations! Your team has been created.";
+    } else if(specialMsg == "update-complete") {
+        hasSpecialText = true;
+        specialText = "Your team  information has been updated.";
     }
 
     for(var i=0; i < req.needsTeams.length; i++) {
@@ -408,7 +416,6 @@ app.get('/main', [requireUserMiddleWare, lookupMyTeams, lookupMyPendingTeams, lo
         userId: req.session.userId,
         gravatarURL: getGravatarURL(req),
         myTeams: req.myTeams,
-        pendingTeams: req.myPendingTeams,
         formedTeams: req.formedTeams,
         needsTeams: req.needsTeams,
         organizationName: config.organizationName,
@@ -465,6 +472,67 @@ app.post('/reject-team-member', requireUserMiddleWare, function(req, res, next) 
     overlordGithubAPI.authenticatePassword(config.overlordUsername, config.overlordPassword);
 
     var organizationAPI = overlordGithubAPI.getOrganizationApi();
+});
+
+
+app.post('/updateTeam', [requireUserMiddleWare, requireValidTeam, requireTeamMemberMiddleWare], function(req, res, next){
+    console.log("!!!: updateTeam");
+    var team_name = req.body.team_name;
+    var project_description = req.body.project_description;
+    var publish_project_description_field = req.body.publish_project_description_field;
+    var need_developers_field = req.body.need_developers_field;
+    var need_designers_field = req.body.need_designers_field;
+    var need_ideas_field = req.body.need_ideas_field;
+
+    //Check
+    check(team_name).len(1, 120);
+    check(project_description).len(0, 2048);
+
+    //Sanitize
+    team_name = sanitize(team_name).xss();
+    project_description = sanitize(project_description).xss();
+
+    //To Booleans
+    publish_project_description_field = (publish_project_description_field === 'Y');
+    need_developers_field = (need_developers_field === 'Y');
+    need_designers_field = (need_designers_field === 'Y');
+    need_ideas_field = (need_ideas_field === 'Y');
+
+    //New participant save
+    var Participant = app.mongo.model('Participant');
+    var Team = app.mongo.model('Team');
+
+    //Do real updates to the team object
+    var teamForUpdate = req.team;
+    teamForUpdate.name = team_name;
+    teamForUpdate.description = project_description;
+    teamForUpdate.needsDevelopers = need_developers_field;
+    teamForUpdate.needsDesigners = need_designers_field;
+    teamForUpdate.needsIdeas = need_ideas_field;
+    teamForUpdate.publishProjectDescription = publish_project_description_field;
+
+
+    teamForUpdate.save(function(err) {
+        if(err) {
+            next(err);
+        } else {
+            if(err) {
+                next(err);
+            } else {
+                res.redirect("/main?specialMsg=update-complete");
+            }
+            //var dataStoreHandler = new DataStoreHandler(app, req.session);
+            //dataStoreHandler.updateTeam(teamForUpdate, function(err, team) {
+            //    if(err) {
+            //        console.log("err: " + JSON.stringify(err));
+            //        next(err);
+            //    } else {
+            //        //console.log("retFromDataStoreHandler=" + JSON.stringify(team));
+            //        res.redirect("/main?specialMsg=update-complete");
+            //    }
+            //});
+        }
+    });
 });
 
 
@@ -553,6 +621,7 @@ function getGravatarURL(req) {
 
 //Protect middleware
 function requireUserMiddleWare(req, res, next) {
+    console.log("!!!: requireUserMiddleWare");
     try {
         if(req.session.githubAccessToken && req.session.user) {
             next();
@@ -565,6 +634,7 @@ function requireUserMiddleWare(req, res, next) {
 }
 
 function requireValidTeam(req, res, next) {
+    console.log("!!!: requireValidTeam");
     var teamId = req.body.team_id;
 
     var Team = app.mongo.model('Team');
@@ -588,11 +658,15 @@ function requireValidTeam(req, res, next) {
 
 
 function requireTeamMemberMiddleWare(req, res, next) {
+    console.log("!!!: requireTeamMemberMiddleWare");
     var teamId = req.body.team_id;
 
     var Team = app.mongo.model('Team');
     var currentParticipantId = req.session.userId;
 
+    console.log("teamId="  + teamId);
+    console.log("currentParticipantId=" + currentParticipantId);
+    
      Team.find({_id: teamId}, function(err, docs) {
         if(err) {
             next(err);
@@ -601,25 +675,25 @@ function requireTeamMemberMiddleWare(req, res, next) {
                 var currentDoc = docs[0];
                 var foundMatch = false;
                 for(var i=0; i < currentDoc.participants.length; i++) {
-                    if(currentDoc.participants[i] === currentParticipantId) {
+                    if(currentDoc.participants[i] == currentParticipantId) {
                         foundMatch = true;
-                        next();
+                        return next();
                     }
                 }
                 if(!foundMatch) {
+                    console.log("ERROR!!! No match!");
                     next(new Error("Access Denied"));
                 }
             } else {
-                if(!foundMatch) {
-                    next(new Error("Access Denied"));
-                }
+                console.log("ERROR!!! No docs!");
+                next(new Error("Access Denied. Invalid team."));
             }
         }
      });
-
 }
 
 function lookupMyTeams(req, res, next) {
+    console.log("!!!: lookupMyTeams");
     var Team = app.mongo.model('Team');
     var currentParticipantId = req.session.userId;
     Team.where('participants').in([currentParticipantId]).populate('participants').run(function(err, docs) {
@@ -631,20 +705,6 @@ function lookupMyTeams(req, res, next) {
         }
     });
 }
-
-function lookupMyPendingTeams(req, res, next) {
-    var Team = app.mongo.model('Team');
-    var currentParticipantId = req.session.userId;
-    Team.where('pendingParticipants').in([currentParticipantId]).run(function(err, docs) {
-        if(err) {
-            next(err);
-        } else {
-            req.myPendingTeams = docs;
-            next();
-        }
-    });
-}
-
 
 function lookupFormedTeams(req, res, next) {
     var Team = app.mongo.model('Team');

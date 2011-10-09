@@ -1,4 +1,4 @@
-div(class='section-header') #{sectionTitle}
+
 script(type='text/javascript')
     function signup() {
         location.href='/participant-signup'
@@ -6,12 +6,18 @@ script(type='text/javascript')
 div(class='step-section-selected')
     div(class='step-section-content')
         p Welcome
-        p(class='tiny-description', style='margin:1em') This will be the main system to view / manage teams and team members. More to come.
-        p(style='margin:1em')
-                form(class='buttons')
-                    input(type='button',value='Signup / Sign In',onclick='signup()')
+        p(style='margin: 1em')
+        p(class='tiny-description', style='margin:0.5em;') This is the main system to view / manage teams and team members. Updates will be periodically applied.
+        p(style='margin: 1em')
+        p(class='tiny-description', style='margin:0.5em; font-weight: bold') A Github &#0153; account is required for the hackathon. You can signup for free or login to your account.
         p(style='margin: 2em')
-        p(class='tiny-description', style='margin:1em') This application is open source and is currently in active development.
-        p(class='tiny-description', style='margin:1em') The github repo is at: <a href='https://github.com/hack4reno/hackathon-registration'>https://github.com/hack4reno/hackathon-registration<a/>.
 
+        p(style='margin:0.5em')
+                form(class='buttons')
+                    input(type='button',value='Sign In',onclick='signin()')
+                    input(type='button',class='longer-button', value='Sign up for an account',onclick='createGithubAccount()')
+        p(style='margin: 2em')
+        p(class='tiny-description', style='margin:0.5em') This application is open source and is currently in active development.
+        p(class='tiny-description', style='margin:0.5em') The github repo is at: <a href='https://github.com/hack4reno/hackathon-registration'>https://github.com/hack4reno/hackathon-registration<a/>.
+        p(style='margin: 2em')
 
