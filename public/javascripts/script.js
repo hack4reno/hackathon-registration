@@ -128,6 +128,8 @@ function initShowForm() {
 
     } else {
         togglePublishDescriptionYes();
+        toggleNeedDesigners(true, true);
+        toggleNeedDevelopers(true, true);
     }
 
     $("#" + currentFormPrefix + "team_name").focus();

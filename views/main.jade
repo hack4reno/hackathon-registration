@@ -15,9 +15,9 @@ div(class='step-section-completed',id='team-join-section')
             if hasSpecialText
                 div(class='special-msg-block', id='special-text-block') #{specialText}
             div(class='toggle-button-row')
-                input(type='button', id='button-my-team', class='tiny-toggle-button', value='My Team(s)', onclick='toggleMyTeam()')
-                input(type='button', id='button-formed-teams', class='tiny-toggle-button', value='Formed Teams', onclick='toggleFormedTeams()')
-                input(type='button', id='button-needs-teams', class='tiny-toggle-button', value='Teams Needing Members', onclick='toggleTeamNeeds()')
+                input(type='button', id='button-my-team', class='tiny-toggle-button', value='My Teams', onclick='toggleMyTeam()')
+                input(type='button', id='button-needs-teams', class='tiny-toggle-button', value='Open Teams', onclick='toggleTeamNeeds()')
+                input(type='button', id='button-formed-teams', class='tiny-toggle-button', value='Finalized Teams', onclick='toggleFormedTeams()')
             div(id='info-my-team', class='team-list', style='display:none')
                 div(style='padding-bottom: 0.5em')
                     if myTeams.length == 0
@@ -39,7 +39,7 @@ div(class='step-section-completed',id='team-join-section')
                 if formedTeams.length > 0
                     != partial('team-info-panel', {collection: formedTeams, as: 'team'})
                 else
-                    p No teams have been fully formed, yet.
+                    p No teams have been finalized, yet.
             div(id='list-needs-teams', class='team-list', style='display:none')
                 if needsTeams.length > 0
                     != partial('team-join-panel', {collection: needsTeams, as: 'team'})
