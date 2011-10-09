@@ -1,14 +1,20 @@
-div(class='team-info-panel-block')
+div(class='team-info-panel-block', id='infoblock-#{team._id}')
     div(class='team-info-panel-name')
         #{team.name}
     div(class='team-info-panel-description')
-        if team.publishProjectDescription == true
-            p #{team.publicDescription}
-        else
-            p(class='nonPublicDescription') Description Not Public
+        div
+            span(class='teamLabel') Description:
+            if team.publishProjectDescription == true
+                span #{team.publicDescription}
+            else
+                span(class='nonPublicDescription') Description Not Public
+        div
+            span(class='teamLabel') Github:
+            span
+                a(href='https://github.com/#{organizationName}/#{team.githubRepositoryName}') #{organizationName}/#{team.githubRepositoryName}
     div(class='team-info-panel-members')
         each participant in team.participants
-            img(src='https://secure.gravatar.com/avatar/#{participant.gravatarId}?s=30')
+            img(src='https://secure.gravatar.com/avatar/#{participant.gravatarId}?s=30', class='gravatarImg')
     div(class='team-panel-needs-bar')
         if (team.needsDevelopers)
             span(class='team-info-panel-needs-block') Needs Developers

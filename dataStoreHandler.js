@@ -9,6 +9,7 @@ function DataStoreHandler(app, sessionObject) {
     //Get information from the current session
     this.$userId = sessionObject.userId;
     this.$githubUser = sessionObject.user;
+    this.$githubAccessToken = sessionObject.githubAccessToken;
 };
 
 DataStoreHandler.prototype.listMyTeams = function(callback) {
@@ -43,6 +44,7 @@ DataStoreHandler.prototype.saveTeamToDb = function(teamInfo, callback) {
         needsDesigners: teamInfo.needsDesigners,
         needsIdeas: teamInfo.needsIdeas,
         description: teamInfo.description,
+        owner: this.$userId,
         publishProjectDescription: teamInfo.publishProjectDescription,
         maxTeamSize: 4});
 
@@ -51,6 +53,57 @@ DataStoreHandler.prototype.saveTeamToDb = function(teamInfo, callback) {
             callback(err);
         } else {
             callback(null, newTeam);
+        }
+    });
+};
+
+DataStoreHandler.prototype.joinTeam = function(team, callback) {
+    var thisObj = this;
+    var githubAPI = thisObj.getNewGithubAPI();
+    var organizationAPI = githubAPI.getOrganizationApi();
+    var issueAPI = githubAPI.getIssueApi();
+
+    var issueTitle = thisObj.$githubUser.login + " just joined your team!";
+    var issueBody = "This is an automated friendly message to let you know that " + thisObj.$githubUser.login + " just joined your team. Use this issue to track discussions regarding this action. Close this issue if there are no discussions required.";
+
+    issueAPI.createIssue = function(title, body, repositoryName, callback)
+    {
+        var parameters = {};
+        parameters["login"] = thisObj.$githubUser.login;
+        parameters["token"] = this.$githubAccessToken;
+        parameters["title"] = title;
+        parameters["body"] = body;
+
+        issueAPI.$api.post(
+            'issues/open/' + thisObj.$config.organizationName + "/" + repositoryName,
+            parameters, null,
+            issueAPI.$createListener(callback)
+        );
+    };
+
+    organizationAPI.addTeamMember(team.githubTeamId, thisObj.$githubUser.login, function(err, members) {
+        if(err) {
+            callback(err);
+        } else {
+            if(err) {
+                callback(err);
+            } else {
+                team.participants.push(thisObj.$userId);
+                team.save(function(err) {
+                    if(err) {
+                        callback(err);
+                    } else {
+                        issueAPI.createIssue(issueTitle, issueBody, team.githubRepositoryName, function(err, issueRet) {
+                            if(err) {
+                                callback(err);
+                            } else {
+                                console.log("issueRet=" + JSON.stringify(issueRet));
+                                callback(null, issueRet);
+                            }
+                        });
+                    }
+                });
+            }
         }
     });
 };

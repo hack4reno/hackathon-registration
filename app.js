@@ -126,7 +126,41 @@ app.get('/participant-join-submitted', function(req, res){
 
 //This is the callback from github
 app.get('/participant-signup-validated', requireUserMiddleWare, function(req, res, next){
-    //Check if user is registered
+    var Participant = app.mongo.model('Participant');
+    Participant.find({username: req.session.user.login}, function(err, docs) {
+        if(err) {
+            next(err);
+        } else {
+            if(docs !== undefined && docs != null && docs.length == 1) {
+                //If the user exists, update the oAuthAccessCode in the db and continue
+                var currentParticipant = docs[0];
+                var currentParticipantId = currentParticipant._id;
+                currentParticipant.oAuthAccessCode = req.session.githubAccessToken;
+                currentParticipant.lastLogin = req.session.lastLogin;
+                currentParticipant.save(function(err) {
+                    if(err) {
+                        next(err);
+                    } else {
+                        saveInfoToSession(req, {userId: currentParticipantId});
+                        res.redirect('/main');
+                    }
+                });
+            } else {
+                var newParticipant = new Participant({gravatarId: req.session.user.gravatar_id, username: req.session.user.login, oAuthAccessCode: req.session.githubAccessToken});
+                newParticipant.save(function(err) {
+                    if(err) {
+                        console.log("Err=" + err);
+                        next(err);
+                    } else {
+                        saveInfoToSession(req, {userId: newParticipant._id});
+                        res.redirect('/main');
+                    }
+                });
+            }
+        }
+    });
+
+    /*//Check if user is registered
     var Participant = app.mongo.model('Participant');
     Participant.find({username: req.session.user.login}, function(err, docs) {
         if(err) {
@@ -188,7 +222,7 @@ app.get('/participant-signup-validated', requireUserMiddleWare, function(req, re
                 });
             }
         }
-    });
+    });*/
 });
 
 
@@ -252,6 +286,7 @@ app.get('/participant-signup-validated-join-team', requireUserMiddleWare, functi
                 userName: req.session.user.login,
                 gravatarURL: getGravatarURL(req),
                 needsTeams: docs,
+                organizationName: config.organizationName,
                 newTeam: new Team(),
                 loggedIn: true
             });
@@ -336,6 +371,7 @@ app.get('/github_signin', function(req, res) {
 });
 
 app.get('/main', [requireUserMiddleWare, lookupMyTeams, lookupMyPendingTeams, lookupFormedTeams, lookupNeedsTeams], function(req, res) {
+    var Team = app.mongo.model('Team');
     var specialMsg = req.param('specialMsg');
 
     var specialText = "";
@@ -344,48 +380,54 @@ app.get('/main', [requireUserMiddleWare, lookupMyTeams, lookupMyPendingTeams, lo
     //Special messages
     if(specialMsg == "join-team") {
         hasSpecialText = true;
-        specialText = "The owner of the team has been notified that you wish to join. Please come back once you have been approved.";
+        specialText = "Congratulations! You've just joined a team. A repository issue was opened to notify the other team members of your presence and track discussions around it.";
     } else if(specialMsg == "create-team") {
-        hasSpecialText = true;
+         hasSpecialText = true;
         specialText = "Congratulations! Your team has been created.";
+    }
+
+    for(var i=0; i < req.needsTeams.length; i++) {
+        var currentTeam = req.needsTeams[i];
+        currentTeam.isParticipant = false;
+        for(var j=0; j < currentTeam.participants.length; j++) {
+              //if is populated
+              if(currentTeam.participants[j]._id === undefined) {
+                  if(req.session.userId == currentTeam.participants[j])
+                    currentTeam.isParticipant = true;
+              } else {
+                  if(req.session.userId == currentTeam.participants[j]._id)
+                    currentTeam.isParticipant = true;
+              }
+         }
     }
 
     res.render('main', {
         title: 'Hack4Reno',
         sectionTitle: 'Main Hub',
         userName: req.session.user.login,
+        userId: req.session.userId,
         gravatarURL: getGravatarURL(req),
         myTeams: req.myTeams,
         pendingTeams: req.myPendingTeams,
         formedTeams: req.formedTeams,
         needsTeams: req.needsTeams,
+        organizationName: config.organizationName,
         specialText: specialText,
         hasSpecialText: hasSpecialText,
+        newTeam: new Team(),
         loggedIn: true
     });
 });
 
-app.post('/join-team', requireUserMiddleWare, function(req, res, next){
-    var team_id = req.body.team_id;
-    console.log('Team_id=' + team_id);
-    var Team = app.mongo.model('Team');
-    Team.find({_id: team_id}, function(err, docs) {
+app.post('/join-team', [requireUserMiddleWare, requireValidTeam], function(req, res, next){
+    var dataStoreHandler = new DataStoreHandler(app, req.session);
+
+    dataStoreHandler.joinTeam(req.team, function(err, team) {
         if(err) {
+            console.log("err: " + JSON.stringify(err));
             next(err);
         } else {
-            if(docs === undefined || docs === null || docs.length == 0) {
-                next(new Error("Unable to locate team with criteria."));
-            } else {
-                var currentTeam = docs[0];
-                currentTeam.pendingParticipants.push(req.session.userId);
-                currentTeam.save(function(err) {
-                    if(err) {
-                        next(err);
-                    } else {
-                        res.redirect("/main?specialMsg=join-team");
-                    }
-                });
-            }
+            res.redirect("/main?specialMsg=join-team");
         }
     });
 });
@@ -415,12 +457,6 @@ app.post('/approve-team-member', [requireUserMiddleWare, requireTeamMemberMiddle
         }
     });
 
-
-     //Github magic start
-    /*var overlordGithubAPI = new GitHubApi(true);
-    overlordGithubAPI.authenticatePassword(config.overlordUsername, config.overlordPassword);
-
-    var organizationAPI = overlordGithubAPI.getOrganizationApi();*/
 });
 
 app.post('/reject-team-member', requireUserMiddleWare, function(req, res, next) {
@@ -492,10 +528,6 @@ function saveInfoToSession(req, sessionInfoObject) {
         pendingTeams: [],
         activeTeams: [],
         userId: null,
-        teamId: null,
-        teamName: null,
-        hasTeam: false,
-        pendingTeam: false,
         login: null
     };
     
@@ -532,6 +564,29 @@ function requireUserMiddleWare(req, res, next) {
     }
 }
 
+function requireValidTeam(req, res, next) {
+    var teamId = req.body.team_id;
+
+    var Team = app.mongo.model('Team');
+    var currentParticipantId = req.session.userId;
+
+     Team.find({_id: teamId}, function(err, docs) {
+        if(err) {
+            next(err);
+        } else {
+            if(docs.length == 1 && docs[0].githubTeamId) {
+                var currentDoc = docs[0];
+                req.team = currentDoc;
+                next();
+            } else {
+                next(new Error("Invalid Team"));
+            }
+        }
+     });
+
+}
+
+
 function requireTeamMemberMiddleWare(req, res, next) {
     var teamId = req.body.team_id;
 
@@ -562,25 +617,12 @@ function requireTeamMemberMiddleWare(req, res, next) {
         }
      });
 
-    //Find myTeams
-   /* Team.where('participants').in([currentParticipantId]).$where("this._id === '" + currentParticipantId + "'").run(function(err, docs) {
-        if(err) {
-            next(err);
-        } else {
-            if(docs.length == 1) {
-                next();
-            } else {
-                next(new Error("Permission Denied. Unable to perform task on team that you are not a participant of."));
-            }
-        }
-    });*/
-
 }
 
 function lookupMyTeams(req, res, next) {
     var Team = app.mongo.model('Team');
     var currentParticipantId = req.session.userId;
-    Team.where('participants').in([currentParticipantId]).run(function(err, docs) {
+    Team.where('participants').in([currentParticipantId]).populate('participants').run(function(err, docs) {
         if(err) {
             next(err);
         } else {

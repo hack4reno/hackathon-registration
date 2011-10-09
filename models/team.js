@@ -15,6 +15,7 @@ var TeamSchema = module.exports = new Schema({
     participants: [{ type: Schema.ObjectId, ref: 'Participant' }],
     pendingParticipants: [{ type: Schema.ObjectId, ref: 'Participant' }],
     projectName: {type: String, "default": ''},
+    owner: {type: Schema.ObjectId, ref: 'Participant'},
     insertDate  :  { type: Date, "default": Date.now }
 });
 

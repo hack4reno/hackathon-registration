@@ -60,9 +60,7 @@ function togglePublishDescriptionNo() {
     $("#button-publish-description-no").toggleClass("tiny-toggle-button-toggled", true);
 }
 
-function isButtonPressed(buttonObj) {
-    return (buttonObj.hasClass("tiny-toggle-button-toggled"));
-}
+
 
 function joinTeam(teamId) {
     $("#form-" + teamId).submit();

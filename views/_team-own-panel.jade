@@ -1,6 +1,34 @@
-form(id='edit-team-form', style='margin-left: 1em',action='edit-own-team',method='POST')
-    != partial('team-edit-panel')
-    div(class='main-button-row')
-        div(class='buttons')
-            form(class='buttons')
-                input(type='button',value='Save',onclick='saveTeamSubmit(\'#{team.id}\')')
+div(class='team-info-panel-block', id='ownblock-#{team._id}')
+    div(class='team-info-panel-name')
+        #{team.name}
+    div(class='team-info-panel-description')
+        div
+            span(class='teamLabel') Description:
+            span #{team.description}
+        div
+            span(class='teamLabel') Github:
+            span
+                a(href='https://github.com/#{organizationName}/#{team.githubRepositoryName}') #{organizationName}/#{team.githubRepositoryName}
+    div(class='team-info-panel-members')
+        each participant in team.participants
+            img(src='https://secure.gravatar.com/avatar/#{participant.gravatarId}?s=30', class='gravatarImg')
+    div(class='team-panel-needs-bar')
+        if (team.needsDevelopers)
+            span(class='team-info-panel-needs-block') Needs Developers
+        if (team.needsDesigners)
+            span(class='team-info-panel-needs-block') Needs Designers
+        if (team.needsIdeas)
+            span(class='team-info-panel-needs-block') Needs Ideas
+        div(class='buttons', style='padding: 0.5em')
+            form(class='buttons',id='form-#{team._id}',action='/join-team',method='POST')
+                input(type='hidden',name='team_id',value='#{team._id}')
+                input(type='button',value='Edit Team',onclick='editTeam(\'#{team._id}\')')
+div(class='step-section-content-underneath', id='editForm-#{team._id}-section', style='display: none')
+    div(id='section-edit-form', class='editFormSection')
+        form(id='editTeamForm-#{team._id}-form', style='margin-left: 1em',action='edit-team',method='POST')
+            != partial('team-edit-panel', {locals: {isNew: false, formPrefix: 'teamForm-' + team._id + '-', team: team}})
+            div(class='main-button-row')
+                div(class='buttons')
+                    form(class='buttons')
+                        input(type='button',value='Save',onclick='editTeamSubmit(\'#{team._id}\')')
+                        input(type='button',value='Cancel',onclick='hideEditTeam(\'#{team._id}\')')
