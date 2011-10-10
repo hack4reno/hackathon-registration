@@ -709,7 +709,7 @@ function lookupMyTeams(req, res, next) {
 
 function lookupFormedTeams(req, res, next) {
     var Team = app.mongo.model('Team');
-    Team.find({needsDevelopers: false, needsDesigners: false, needsIdeas: false}).populate('participants').run(function(err, docs) {
+    Team.$where('this.participants.length >= (this.maxTeamSize) || (this.needsIdeas === false && this.needsDesigners === false && this.needsDevelopers === false)').populate('participants').run(function(err, docs) {
         if(err) {
             next(err);
         } else {
@@ -721,7 +721,7 @@ function lookupFormedTeams(req, res, next) {
 
 function lookupNeedsTeams(req, res, next) {
     var Team = app.mongo.model('Team');
-    Team.$where('this.needsDevelopers === true || this.needsDesigners === true || this.needsIdeas === true').populate('participants').exec(function(err, docs) {
+    Team.$where('this.participants.length < this.maxTeamSize && (this.needsDevelopers === true || this.needsDesigners === true || this.needsIdeas === true)').populate('participants').exec(function(err, docs) {
         if(err) {
             next(err);
         } else {
