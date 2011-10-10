@@ -12,7 +12,7 @@ div(class='team-info-panel-block', id='ownblock-#{team._id}')
     div(class='team-info-panel-members')
         each participant in team.participants
             a(href='https://github.com/#{participant.username}')
-                img(src='https://secure.gravatar.com/avatar/#{participant.gravatarId}?s=30', class='gravatarImg')
+                img(src='https://secure.gravatar.com/avatar/#{participant.gravatarId}?s=30', class='gravatarImg', alt='#{participant.username}')
     div(class='team-panel-needs-bar')
         if (team.needsDevelopers)
             span(class='team-info-panel-needs-block') Needs Developers
