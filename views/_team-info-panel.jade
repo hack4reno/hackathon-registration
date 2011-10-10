@@ -14,7 +14,8 @@ div(class='team-info-panel-block', id='infoblock-#{team._id}')
                 a(href='https://github.com/#{organizationName}/#{team.githubRepositoryName}') #{organizationName}/#{team.githubRepositoryName}
     div(class='team-info-panel-members')
         each participant in team.participants
-            a(href='https://github.com/#{participant.username}') img(src='https://secure.gravatar.com/avatar/#{participant.gravatarId}?s=30', class='gravatarImg')
+            a(href='https://github.com/#{participant.username}')
+                img(src='https://secure.gravatar.com/avatar/#{participant.gravatarId}?s=30', class='gravatarImg')
     div(class='team-panel-needs-bar')
         if (team.needsDevelopers)
             span(class='team-info-panel-needs-block') Needs Developers
