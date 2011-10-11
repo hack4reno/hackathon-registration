@@ -117,6 +117,7 @@ DataStoreHandler.prototype.joinTeam = function(team, callback) {
 
     var personalGithubAPI = thisObj.getNewGithubAPI();
     var issueAPI = personalGithubAPI.getIssueApi();
+    var repositoryAPI = githubAPI.getRepoApi();
 
     issueAPI.createIssue = function(title, body, repositoryName, callback)
     {
@@ -133,6 +134,17 @@ DataStoreHandler.prototype.joinTeam = function(team, callback) {
         );
     };
 
+    repositoryAPI.addCollaboratorToRepo = function(collaboratorUsername, organizationName, repoName, callback)
+    {
+        var parameters = {};
+
+        repositoryAPI.$api.post(
+            'repos/collaborators/' + organizationName + '/' + repoName + '/add/' + collaboratorUsername,
+            parameters, null,
+            repositoryAPI.$createListener(callback)
+        );
+    };
+
     organizationAPI.addTeamMember(team.githubTeamId, thisObj.$githubUser.login, function(err, members) {
         if(err) {
             callback(err);
@@ -140,21 +152,29 @@ DataStoreHandler.prototype.joinTeam = function(team, callback) {
             if(err) {
                 callback(err);
             } else {
-                team.participants.push(thisObj.$userId);
-                team.save(function(err) {
-                    if(err) {
-                        callback(err);
-                    } else {
-                        issueAPI.createIssue(issueTitle, issueBody, team.githubRepositoryName, function(err, issueRet) {
+                //repositoryAPI.addCollaboratorToRepo(thisObj.$githubUser.login, thisObj.$config.organizationName, team.githubRepositoryName, function(err, repoRet) {
+                //    if(err) {
+                //        callback(err);
+                //    } else {
+                //        console.log("Add Collaborator RET: " + JSON.stringify(repoRet));
+                        team.participants.push(thisObj.$userId);
+                        team.save(function(err) {
                             if(err) {
                                 callback(err);
                             } else {
-                                console.log("issueRet=" + JSON.stringify(issueRet));
-                                callback(null, issueRet);
+                                issueAPI.createIssue(issueTitle, issueBody, team.githubRepositoryName, function(err, issueRet) {
+                                    if(err) {
+                                        callback(err);
+                                    } else {
+                                        console.log("issueRet=" + JSON.stringify(issueRet));
+                                        callback(null, issueRet);
+                                    }
+                                });
                             }
                         });
-                    }
-                });
+                //    }
+               // });
+
             }
         }
     });
@@ -163,14 +183,65 @@ DataStoreHandler.prototype.joinTeam = function(team, callback) {
 DataStoreHandler.prototype.createTeam = function(teamInfo, callback) {
     var thisObj = this;
 
+    var githubAPI = thisObj.getNewGithubAPI();
+    var organizationAPI = githubAPI.getOrganizationApi();
+
+    organizationAPI.createTeamWithRepo = function(teamName, organizationName, repo, callback) {
+        var parameters = {};
+        parameters["team[name]"] = teamName;
+        parameters["team[permission]"] = "admin";
+        parameters["team[repo_names][]"] = organizationName + "/" + repo.name;
+
+        this.$api.post(
+            'organizations/' + encodeURI(organizationName) + '/teams',
+            parameters, null,
+            this.$createListener(callback, "team")
+        );
+    };
+
     this.saveTeamToDb(teamInfo, function(err, team) {
         if(err) {
             callback(err);
         } else {
-            var githubAPI = thisObj.getNewGithubAPI();
-            var organizationAPI = githubAPI.getOrganizationApi();
+            thisObj.createTeamRepo(team, function(err, repo) {
+                console.log("Created REPO=" + JSON.stringify(repo));
+                if(err) {
+                    callback(err);
+                } else {
+                     organizationAPI.createTeamWithRepo(teamInfo.name, thisObj.$config.organizationName, repo, function(err, retTeam) {
+                         if(err) {
+                             console.log("err=" + JSON.stringify(err));
+                             callback(err);
+                         } else {
+                             console.log("retTeam=" + JSON.stringify(retTeam));
+                             team.githubRepositoryName = repo.name;
+                             team.githubTeamName = retTeam.name;
+                             team.githubTeamId = retTeam.id;
+                             team.save(function(err) {
+                                if(err) {
+                                    callback(err);
+                                } else {
+                                    thisObj.linkRepositoryToTeam(team, function(err, outRepo) {
+                                        if(err) {
+                                            callback(err);
+                                        } else {
+                                            organizationAPI.addTeamMember(team.githubTeamId, thisObj.$githubUser.login, function(err, members) {
+                                                if(err) {
+                                                    callback(err);
+                                                } else {
+                                                    callback(null, outRepo);
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                             });
+                         }
+                     });
+                }
+            });
 
-            organizationAPI.addTeam(thisObj.$config.organizationName, teamInfo.name, function(err, githubTeam) {
+            /*organizationAPI.addTeam(thisObj.$config.organizationName, teamInfo.name, function(err, githubTeam) {
                 console.log("GithubTeam=" + JSON.stringify(githubTeam));
                 if(err) {
                     callback(err);
@@ -206,7 +277,7 @@ DataStoreHandler.prototype.createTeam = function(teamInfo, callback) {
                         }
                     });
                 }
-            });
+            }); */
         }
     });
 };
@@ -218,10 +289,17 @@ DataStoreHandler.prototype.createTeamRepo = function(team, callback) {
 
     var repositoryAPI = githubAPI.getRepoApi();
 
+    //Store the public description
+    if(team.publishProjectDescription) {
+        team.publicDescription = team.description;
+    } else {
+        team.publicDescription = "";
+    }
+
     repositoryAPI.createRepository = function(team, callback)
     {
         var parameters = {};
-        parameters["name"] = thisObj.$config.organizationName + "/" + team.githubTeamName;
+        parameters["name"] = thisObj.$config.organizationName + "/" + team.name;
         parameters["description"] = team.publicDescription;
         parameters["private"] = false;
         
